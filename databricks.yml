@@ -28,7 +28,7 @@ resources:
         - task_key: main
           job_cluster_key: streaming_dedicated
           notebook_task:
-            notebook_path: ./src/1. Ingest the streaming data
+            notebook_path: src/1. Ingest the streaming data
 
     # REUSING STREAMING CLUSTER - RUNS EVERY 30 SEC
     micro_batch_ingest:
@@ -42,7 +42,7 @@ resources:
         - task_key: main
           job_cluster_key: micro_batch_cluster
           notebook_task:
-            notebook_path: ./src/2. Micro Batch Ingest the streaming blob data
+            notebook_path: src/2. Micro Batch Ingest the streaming blob data
     
     # Batch Job - RUNS EVERY 1 Hour
     batch_ingest:
@@ -56,7 +56,7 @@ resources:
         - task_key: main
           job_cluster_key: batch_cluster
           notebook_task:
-            notebook_path: ./src/3. Batch Ingest the streaming blob data
+            notebook_path: src/3. Batch Ingest the streaming blob data
             
 targets:
   # Development target (uses your dev workspace)
