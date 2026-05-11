@@ -11,8 +11,10 @@ variables:
       num_workers: 0  # Set workers to 0
       spark_conf:
         # This setting is required for Single Node clusters
-        spark.databricks.cluster.profile: "singleNode"
-        spark.master: "local[*]"
+        spark.databricks.cluster.profile: singleNode
+        spark.master: local[*]
+      custom_tags:
+        ResourceClass: SingleNode
 
   catalog_name:
     description: "The name of the Unity Catalog to use"
