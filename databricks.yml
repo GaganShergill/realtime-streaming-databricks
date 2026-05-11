@@ -49,6 +49,7 @@ resources:
       name: "Hourly Batch Ingestion"
       schedule:
         quartz_cron_expression: "0 0 * * * ?" # Runs every 60 minutes or 1 hour
+        timezone_id: "UTC"
       job_clusters:
         - job_cluster_key: batch_cluster
           new_cluster: ${var.cluster_config}
