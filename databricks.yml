@@ -7,7 +7,7 @@ variables:
     description: "Standard job cluster"
     default:
       spark_version: 16.4.x-scala2.12
-      node_type_id: Standard_DS3_v2
+      node_type_id: Standard_D2ads_v6
       num_workers: 1
 
   catalog_name:
