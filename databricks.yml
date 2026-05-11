@@ -1,0 +1,73 @@
+bundle:
+  name: realtime-streaming-databricks
+
+# Define common settings here
+variables:
+  cluster_config:
+    description: "Standard job cluster"
+    default:
+      spark_version: 16.4.x-scala2.12
+      node_type_id: Standard_DS3_v2
+      num_workers: 1
+
+  catalog_name:
+    description: "The name of the Unity Catalog to use"
+    default: dev  # Default for local/dev runs
+
+resources:
+  jobs:
+    # ALWAYS ON - LOWEST RATE
+    streaming_ingest:
+      name: "Streaming Ingest"
+      continuous:
+        pause_status: UNPAUSED
+      job_clusters:
+        - job_cluster_key: streaming_dedicated
+          new_cluster: ${var.cluster_config}
+      tasks:
+        - task_key: main
+          job_cluster_key: streaming_dedicated
+          notebook_task:
+            notebook_path: ./src/1. Ingest the streaming data
+
+    # REUSING STREAMING CLUSTER - RUNS EVERY 30 SEC
+    micro_batch_ingest:
+      name: "Micro Batch Ingestion"
+      continuous:
+        pause_status: UNPAUSED
+      job_clusters:
+        - job_cluster_key: micro_batch_cluster
+          new_cluster: ${var.cluster_config}
+      tasks:
+        - task_key: main
+          job_cluster_key: micro_batch_cluster
+          notebook_task:
+            notebook_path: ./src/2. Micro Batch Ingest the streaming blob data
+    
+    # Batch Job - RUNS EVERY 1 Hour
+    batch_ingest:
+      name: "Hourly Batch Ingestion"
+      schedule:
+        quartz_cron_expression: "0 0 * * * ?" # Runs every 60 minutes or 1 hour
+      job_clusters:
+        - job_cluster_key: batch_cluster
+          new_cluster: ${var.cluster_config}
+      tasks:
+        - task_key: main
+          job_cluster_key: batch_cluster
+          notebook_task:
+            notebook_path: ./src/3. Batch Ingest the streaming blob data
+            
+targets:
+  # Development target (uses your dev workspace)
+  dev:
+    mode: development
+    default: true
+    variables:
+      catalog_name: dev # Your dev catalog name
+
+  # Production target (usually a separate workspace, but can be the same)
+  prod:
+    mode: production
+    variables:
+      catalog_name: prod # Your prod catalog name
