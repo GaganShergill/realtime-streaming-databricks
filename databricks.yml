@@ -33,6 +33,10 @@ resources:
       tasks:
         - task_key: main
           job_cluster_key: streaming_dedicated
+          # ADD THIS SECTION BELOW
+          libraries:
+            - maven:
+                coordinates: "com.microsoft.azure:azure-eventhubs-spark_2.12:2.3.22"
           notebook_task:
             notebook_path: ./src/1. Ingest the streaming data.ipynb
 
