@@ -9,10 +9,13 @@ variables:
       spark_version: 16.4.x-scala2.12
       node_type_id: Standard_D2ads_v6
       num_workers: 0  # Set workers to 0
+      data_security_mode: SINGLE_USER
+      single_user_name: reddragon0111@hotmail.com
       spark_conf:
         # This setting is required for Single Node clusters
         spark.databricks.cluster.profile: singleNode
         spark.master: local[*]
+        spark.sql.files.ignoreMissingFiles: true
       custom_tags:
         ResourceClass: SingleNode
 
@@ -22,53 +25,35 @@ variables:
 
 resources:
   jobs:
-    # ALWAYS ON - LOWEST RATE
-    streaming_ingest:
-      name: "Streaming Ingest"
+    ingestion_pipeline:
+      name: "Ingestion Pipeline"
+      job_clusters:
+        - job_cluster_key: ingestion_cluster
+          new_cluster: ${var.cluster_config}
       continuous:
         pause_status: UNPAUSED
-      job_clusters:
-        - job_cluster_key: streaming_dedicated
-          new_cluster: ${var.cluster_config}
       tasks:
-        - task_key: main
-          job_cluster_key: streaming_dedicated
-          # ADD THIS SECTION BELOW
+        # ALWAYS ON - LOWEST RATE
+        - task_key: streaming_ingest
+          job_cluster_key: ingestion_cluster
           libraries:
             - maven:
                 coordinates: "com.microsoft.azure:azure-eventhubs-spark_2.12:2.3.22"
           notebook_task:
-            notebook_path: ./src/1. Ingest the streaming data.ipynb
+            notebook_path: ./src/raw/1. Ingest the streaming data.ipynb
 
-    # REUSING STREAMING CLUSTER - RUNS EVERY 30 SEC
-    micro_batch_ingest:
-      name: "Micro Batch Ingestion"
-      continuous:
-        pause_status: UNPAUSED
-      job_clusters:
-        - job_cluster_key: micro_batch_cluster
-          new_cluster: ${var.cluster_config}
-      tasks:
-        - task_key: main
-          job_cluster_key: micro_batch_cluster
+        # REUSING STREAMING CLUSTER - RUNS EVERY 30 SEC
+        - task_key: micro_batch_ingest
+          job_cluster_key: ingestion_cluster
           notebook_task:
-            notebook_path: ./src/2. Micro Batch Ingest the streaming blob data.ipynb
-    
-    # Batch Job - RUNS EVERY 1 Hour
-    batch_ingest:
-      name: "Hourly Batch Ingestion"
-      schedule:
-        quartz_cron_expression: "0 0 * * * ?" # Runs every 60 minutes or 1 hour
-        timezone_id: "UTC"
-      job_clusters:
-        - job_cluster_key: batch_cluster
-          new_cluster: ${var.cluster_config}
-      tasks:
-        - task_key: main
-          job_cluster_key: batch_cluster
+            notebook_path: ./src/raw/2. Micro Batch Ingest the streaming blob data.ipynb
+
+        # Batch Job - RUNS ONCE A DAY
+        - task_key: batch_ingest
+          job_cluster_key: ingestion_cluster
           notebook_task:
-            notebook_path: ./src/3. Batch Ingest the streaming blob data.ipynb
-            
+            notebook_path: ./src/raw/3. Batch Ingest the streaming blob data.ipynb
+
 targets:
   # Development target (uses your dev workspace)
   dev:
